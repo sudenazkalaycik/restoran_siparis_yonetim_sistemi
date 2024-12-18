@@ -1,32 +1,47 @@
 package restoran_siparis_yonetim_sistemi;
 
+import java.util.ArrayList;
+
 public class Musteri {
-/*Musteri Sınıfı Detayları
-Musteri Sınıfının Amacı
-Müşterilere özel bilgileri saklamak (isim, telefon numarası vb.).
-Müşterinin sipariş geçmişini tutmak.
-Sistem içinde müşteri ile ilgili sorgulamalar ve işlemler yapmak.
-Musteri Sınıfının İçermesi Gerekenler
-Özellikler (Attributes):
-int musteriId: Müşteri için benzersiz bir ID.
-String isim: Müşterinin adı.
-String telefon: Müşteri telefon numarası.
-ArrayList<Adisyon> siparisGecmisi: Müşterinin sipariş geçmişini saklayan bir liste.
-Metotlar (Methods):
-Constructor (Kurucu Metot):
+    private int musteriID;
+    private String isim;
+    private String telNo;
+    private ArrayList<Adisyon> siparisGecmisi; 
 
-Müşteri bilgilerini başlatır.
-Sipariş geçmişi için bir ArrayList oluşturur.
-Sipariş Geçmişine Ekleme (addSiparis):
+    public Musteri(int musteriID, String isim, String telNo) {
+        this.musteriID = musteriID;
+        this.isim = isim;
+        this.telNo = telNo;
+        this.siparisGecmisi = new ArrayList<>();
+    }
 
-Müşterinin geçmişine yeni bir adisyon (sipariş) ekler.
-Sipariş Geçmişini Listeleme (listeleSiparisGecmisi):
+    // Müşteriye yeni adisyon ekleme
+    public void addSiparis(Adisyon adisyon) {
+        siparisGecmisi.add(adisyon);
+    }
 
-Müşterinin geçmişte yaptığı tüm siparişleri listeler.
-Müşteri Bilgilerini Görüntüleme (getMusteriBilgileri):
+    // Sipariş geçmişini listeleme
+    public void listeleSiparisGecmisi() {
+        System.out.println(isim + " adlı müşterinin geçmiş siparişleri:");
+        for(Adisyon ad : siparisGecmisi) {
+            System.out.println("Adisyon No: " + ad.getAdisyonNo() + ", Masa No: " + ad.getMasaNo()
+                               + ", Toplam: " + ad.toplamTutarHesapla());
+        }
+    }
 
-Müşterinin temel bilgilerini döndürür.
-Telefon Bilgisi Güncelleme (guncelleTelefon):
+    public int getMusteriID() {
+        return musteriID;
+    }
 
-Müşterinin telefon numarasını günceller.*/
+    public String getIsim() {
+        return isim;
+    }
+
+    public String getTelNo() {
+        return telNo;
+    }
+
+    public void guncelleTelefon(String yeniTel) {
+        this.telNo = yeniTel;
+    }
 }
