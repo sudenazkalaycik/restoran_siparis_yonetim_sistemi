@@ -22,8 +22,8 @@ public class Adisyon {
         if (acik) {
             siparisler.add(siparis);
             toplamTutar += siparis.getFiyat() * siparis.getMiktar();
-            System.out.println(siparis.getMiktar() + " x " + siparis.getUrunAdi() + " eklendi. Ara toplam: "
-                               + (siparis.getFiyat() * siparis.getMiktar()) + " TL");
+            System.out.println(siparis.getMiktar() + " x " + siparis.getUrunAdi()
+                    + " eklendi. Ara toplam: " + (siparis.getFiyat() * siparis.getMiktar()) + " TL");
         } else {
             System.out.println("Adisyon kapalı, sipariş eklenemez.");
         }
@@ -67,5 +67,43 @@ public class Adisyon {
 
     public boolean isAcik() {
         return acik;
+    }
+
+    // =============== DOSYA İŞLEMLERİ İÇİN YARDIMCI METOTLAR ===============
+
+    /**
+     * Adisyon objesini tek satırda temsil eden metin.
+     * Örnek: "5;12;145.5;true"
+     * (adisyonNo;masaNo;toplamTutar;acik)
+     */
+    public String toDataString() {
+        return adisyonNo + ";" + masaNo + ";" + toplamTutar + ";" + acik;
+    }
+
+    /**
+     * Metin satırından (örnek "5;12;145.5;true") bir Adisyon nesnesi oluşturmaya çalışır.
+     */
+    public static Adisyon fromDataString(String dataLine) {
+        // Split
+        String[] parts = dataLine.split(";");
+        if (parts.length < 4) {
+            return null; // Eksik veya hatalı satır
+        }
+        try {
+            int adisyonNo = Integer.parseInt(parts[0]);
+            int masaNo = Integer.parseInt(parts[1]);
+            double toplamTutar = Double.parseDouble(parts[2]);
+            boolean acik = Boolean.parseBoolean(parts[3]);
+
+            Adisyon adisyon = new Adisyon(adisyonNo, masaNo);
+            // Dosyadan gelen toplam tutarı set edelim:
+            adisyon.toplamTutar = toplamTutar;
+            // Dosyadan gelen açık/kapalı durumu set edelim:
+            adisyon.acik = acik;
+
+            return adisyon;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

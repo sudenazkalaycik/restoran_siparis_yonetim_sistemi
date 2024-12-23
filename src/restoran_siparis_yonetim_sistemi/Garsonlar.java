@@ -46,7 +46,14 @@ public class Garsonlar {
     public String getAd() {
         return ad;
     }
-
+    public void setAd(String ad) {
+        this.ad = ad;
+    }
+    
+    public void setSoyad(String soyad) {
+        this.soyad = soyad;
+    }
+    
     public String getSoyad() {
         return soyad;
     }

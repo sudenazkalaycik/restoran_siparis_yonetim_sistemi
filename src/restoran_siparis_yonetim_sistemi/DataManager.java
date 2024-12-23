@@ -109,7 +109,7 @@ public class DataManager {
     public static void saveMasalar(List<Masa> masalar) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(MASA_DOSYA_ADI))) {
             for (Masa masa : masalar) {
-                writer.write("MASA#" + masa.getNumara() + "#" + masa.getKapasite() + "#" + masa.isAcikMi() + "#" + masa.isRezerveMi());
+                writer.write("MASA#" + masa.getNumara() + "#" + masa.getKapasite() + "#" + masa.isAcikMi() + "#" );
                 writer.newLine();
             }
             writer.flush();
@@ -133,10 +133,8 @@ public class DataManager {
                     int numara = Integer.parseInt(parca[1]);
                     int kapasite = Integer.parseInt(parca[2]);
                     boolean acikMi = Boolean.parseBoolean(parca[3]);
-                    boolean rezerveMi = Boolean.parseBoolean(parca[4]);
                     Masa masa = new Masa(numara, kapasite);
                     if(acikMi) masa.masaAc();
-                    if(rezerveMi) masa.rezerveEt("Rezerve Edildi", "0000000000"); // Örnek
                     masalar.add(masa);
                 }
             }

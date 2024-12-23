@@ -51,9 +51,17 @@ public class Menu {
 		}
 	}
 
-	public boolean urunAra(String urunAdi) {
-		return icecekler.containsKey(urunAdi) || anaYemekler.containsKey(urunAdi) || tatlilar.containsKey(urunAdi);
+	public double urunAra(String urunAdi) {
+		if (anaYemekler.containsKey(urunAdi)) {
+			return anaYemekler.get(urunAdi);
+		} else if (icecekler.containsKey(urunAdi)) {
+			return icecekler.get(urunAdi);
+		} else if (tatlilar.containsKey(urunAdi)) {
+			return tatlilar.get(urunAdi);
+		}
+		return -1;
 	}
+	
 
 	public void menuGoruntule() {
 		System.out.println("=== MENÜ ===");

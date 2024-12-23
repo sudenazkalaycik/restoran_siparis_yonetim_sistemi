@@ -2,11 +2,19 @@ package restoran_siparis_yonetim_sistemi;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener; // Önemli: ActionListener import'u
+import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class AdisyonPanel extends JPanel {
+    // Adisyonları sakladığımız liste
+    private List<Adisyon> adisyonlar = new ArrayList<>();
+
+    // adisyon.oot dosyası
+    private static final String DOSYA_ADI = "adisyon.oot";
+
     private JComboBox<Garsonlar> cbGarsonSec;
     private JTextArea textArea;
     private JButton btnOlustur, btnSiparisListele, btnAdisyonKapat;
@@ -25,6 +33,9 @@ public class AdisyonPanel extends JPanel {
         this.garsonlar = garsonlar;
         this.menu = menu;
         setLayout(new BorderLayout());
+
+        // Program başlarken dosyadan adisyonları yükle
+        loadAdisyonlarFromFile();
 
         // Top panel: Garson seçimi ve adisyon oluşturma
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -105,21 +116,103 @@ public class AdisyonPanel extends JPanel {
 
         add(bottomPanel, BorderLayout.CENTER);
 
-        // ActionListeners
-        btnOlustur.addActionListener(e -> yeniAdisyon());
-        btnAdisyonKapat.addActionListener(e -> adisyonKapat());
-
-        cbKategori.addActionListener(e -> kategoriUrunleriniYukle());
-        cbUrunSec.addActionListener(e -> urunFiyatiniGoster());
-        btnEkleSiparis.addActionListener(e -> siparisEkle());
-
+        // Ek buton: Siparişleri Listele
         btnSiparisListele = new JButton("Siparişleri Listele");
         bottomPanel.add(btnSiparisListele, BorderLayout.SOUTH);
-        btnSiparisListele.addActionListener(e -> siparisListele());
 
-        // Initialize product list
+        // ====================== ActionListeners (Java 7 uyumlu) ======================
+
+        // "Yeni Adisyon" butonu
+        btnOlustur.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                yeniAdisyon();
+            }
+        });
+
+        // "Adisyonu Kapat" butonu
+        btnAdisyonKapat.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                adisyonKapat();
+            }
+        });
+
+        // Kategori combobox değişince ürünleri yükle
+        cbKategori.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                kategoriUrunleriniYukle();
+            }
+        });
+
+        // Ürün combobox değişince fiyatı göster
+        cbUrunSec.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                urunFiyatiniGoster();
+            }
+        });
+
+        // "Sipariş Ekle" butonu
+        btnEkleSiparis.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                siparisEkle();
+            }
+        });
+
+        // "Siparişleri Listele" butonu
+        btnSiparisListele.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                siparisListele();
+            }
+        });
+
+        // Başlangıçta kategoriyi yükle
         kategoriUrunleriniYukle();
     }
+
+    // ===================== Dosya İşlemleri =====================
+
+    /**
+     * Uygulama başlarken adisyon.oot dosyasından kayıtlı adisyonları okur.
+     */
+    private void loadAdisyonlarFromFile() {
+        File file = new File(DOSYA_ADI);
+        if (!file.exists()) {
+            return; // Dosya yoksa çık
+        }
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                Adisyon adisyon = Adisyon.fromDataString(line);
+                if (adisyon != null) {
+                    adisyonlar.add(adisyon);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Adisyonlar listesi değiştikçe adisyon.oot dosyasını günceller.
+     */
+    private void saveAdisyonlarToFile() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(DOSYA_ADI, false))) {
+            for (Adisyon adisyon : adisyonlar) {
+                bw.write(adisyon.toDataString());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ===================== Adisyon İşlemleri =====================
 
     private void yeniAdisyon() {
         Garsonlar secilenGarson = (Garsonlar) cbGarsonSec.getSelectedItem();
@@ -131,12 +224,27 @@ public class AdisyonPanel extends JPanel {
         String adisyonNoStr = JOptionPane.showInputDialog("Adisyon Numarası:");
         String masaNoStr = JOptionPane.showInputDialog("Masa Numarası:");
         if(adisyonNoStr == null || masaNoStr == null) return;
+
         try {
             int adisyonNo = Integer.parseInt(adisyonNoStr);
             int masaNo = Integer.parseInt(masaNoStr);
+
+            // Aynı adisyonNo var mı kontrol edelim (opsiyonel)
+            Adisyon existing = adisyonBul(adisyonNo);
+            if (existing != null) {
+                JOptionPane.showMessageDialog(this, "Bu adisyon numarası zaten var!");
+                return;
+            }
+
+            // Yeni adisyon oluştur
             aktifAdisyon = new Adisyon(adisyonNo, masaNo);
+            adisyonlar.add(aktifAdisyon); // Listemize ekleyelim
             secilenGarson.adisyonEkle(aktifAdisyon);
+
             textArea.setText("Yeni Adisyon oluşturuldu (Adisyon No:" + adisyonNo + ")\n");
+
+            // Dosyayı güncelle
+            saveAdisyonlarToFile();
         } catch(NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Geçersiz numara girişi.");
         }
@@ -149,63 +257,10 @@ public class AdisyonPanel extends JPanel {
         }
         aktifAdisyon.adisyonKapat();
         textArea.append("Adisyon kapatıldı. Toplam: " + aktifAdisyon.toplamTutarHesapla() + " TL\n");
-        aktifAdisyon = null; // Yeni adisyon için null yapıyoruz
-    }
-
-    /**
-     * Kategori seçildiğinde ürünleri günceller.
-     */
-    private void kategoriUrunleriniYukle() {
-        cbUrunSec.removeAllItems();
-        String kategori = (String) cbKategori.getSelectedItem();
-        if (kategori == null) return;
-
-        switch(kategori) {
-            case "Ana Yemek":
-                for (String urun : menu.getAnaYemekler().keySet()) {
-                    cbUrunSec.addItem(urun);
-                }
-                break;
-            case "İçecek":
-                for (String urun : menu.getIçecekler().keySet()) {
-                    cbUrunSec.addItem(urun);
-                }
-                break;
-            case "Tatlı":
-                for (String urun : menu.getTatlilar().keySet()) {
-                    cbUrunSec.addItem(urun);
-                }
-                break;
-        }
-
-        // Seçili ürüne göre fiyatı göster
-        urunFiyatiniGoster();
-    }
-
-    /**
-     * Seçilen ürüne göre fiyatı label'da gösterir.
-     */
-    private void urunFiyatiniGoster() {
-        String kategori = (String) cbKategori.getSelectedItem();
-        String urun = (String) cbUrunSec.getSelectedItem();
-        if (kategori == null || urun == null) {
-            lblFiyat.setText("0.0 TL");
-            return;
-        }
-
-        double fiyat = 0.0;
-        switch(kategori) {
-            case "Ana Yemek":
-                fiyat = menu.getAnaYemekler().getOrDefault(urun, 0.0);
-                break;
-            case "İçecek":
-                fiyat = menu.getIçecekler().getOrDefault(urun, 0.0);
-                break;
-            case "Tatlı":
-                fiyat = menu.getTatlilar().getOrDefault(urun, 0.0);
-                break;
-        }
-        lblFiyat.setText(String.format("%.2f TL", fiyat));
+        // Dosyayı güncelle
+        saveAdisyonlarToFile();
+        // Yeni adisyon açmak için null set
+        aktifAdisyon = null;
     }
 
     private void siparisEkle() {
@@ -233,16 +288,12 @@ public class AdisyonPanel extends JPanel {
         }
 
         double fiyat = 0.0;
-        switch(kategori) {
-            case "Ana Yemek":
-                fiyat = menu.getAnaYemekler().getOrDefault(urunAdi, 0.0);
-                break;
-            case "İçecek":
-                fiyat = menu.getIçecekler().getOrDefault(urunAdi, 0.0);
-                break;
-            case "Tatlı":
-                fiyat = menu.getTatlilar().getOrDefault(urunAdi, 0.0);
-                break;
+        if ("Ana Yemek".equals(kategori)) {
+            fiyat = menu.getAnaYemekler().getOrDefault(urunAdi, 0.0);
+        } else if ("İçecek".equals(kategori)) {
+            fiyat = menu.getIçecekler().getOrDefault(urunAdi, 0.0);
+        } else if ("Tatlı".equals(kategori)) {
+            fiyat = menu.getTatlilar().getOrDefault(urunAdi, 0.0);
         }
 
         if (fiyat <= 0.0) {
@@ -253,6 +304,9 @@ public class AdisyonPanel extends JPanel {
         Siparis siparis = new Siparis(urunAdi, fiyat, miktar);
         aktifAdisyon.siparisEkle(siparis);
         textArea.append("Sipariş Eklendi: " + miktar + " x " + urunAdi + " (" + fiyat + " TL)\n");
+
+        // Her sipariş eklendiğinde de güncelle (toplam tutar değişir)
+        saveAdisyonlarToFile();
     }
 
     private void siparisListele() {
@@ -270,5 +324,67 @@ public class AdisyonPanel extends JPanel {
             }
             textArea.append("Toplam Tutar: " + aktifAdisyon.toplamTutarHesapla() + " TL\n");
         }
+    }
+
+    // ===================== Yardımcı Metotlar =====================
+
+    /**
+     * Kategori seçildiğinde ürünleri ComboBox'a ekler.
+     */
+    private void kategoriUrunleriniYukle() {
+        cbUrunSec.removeAllItems();
+        String kategori = (String) cbKategori.getSelectedItem();
+        if (kategori == null) return;
+
+        if ("Ana Yemek".equals(kategori)) {
+            for (String urun : menu.getAnaYemekler().keySet()) {
+                cbUrunSec.addItem(urun);
+            }
+        } else if ("İçecek".equals(kategori)) {
+            for (String urun : menu.getIçecekler().keySet()) {
+                cbUrunSec.addItem(urun);
+            }
+        } else if ("Tatlı".equals(kategori)) {
+            for (String urun : menu.getTatlilar().keySet()) {
+                cbUrunSec.addItem(urun);
+            }
+        }
+
+        // Seçili ürüne göre fiyatı göster
+        urunFiyatiniGoster();
+    }
+
+    /**
+     * Seçilen ürüne göre fiyatı label'da gösterir.
+     */
+    private void urunFiyatiniGoster() {
+        String kategori = (String) cbKategori.getSelectedItem();
+        String urun = (String) cbUrunSec.getSelectedItem();
+        if (kategori == null || urun == null) {
+            lblFiyat.setText("0.0 TL");
+            return;
+        }
+
+        double fiyat = 0.0;
+        if ("Ana Yemek".equals(kategori)) {
+            fiyat = menu.getAnaYemekler().getOrDefault(urun, 0.0);
+        } else if ("İçecek".equals(kategori)) {
+            fiyat = menu.getIçecekler().getOrDefault(urun, 0.0);
+        } else if ("Tatlı".equals(kategori)) {
+            fiyat = menu.getTatlilar().getOrDefault(urun, 0.0);
+        }
+        lblFiyat.setText(String.format("%.2f TL", fiyat));
+    }
+
+    /**
+     * Adisyonlar içinden adisyonNo ile eşleşen adisyonu bulur.
+     */
+    private Adisyon adisyonBul(int adisyonNo) {
+        for (Adisyon a : adisyonlar) {
+            if (a.getAdisyonNo() == adisyonNo) {
+                return a;
+            }
+        }
+        return null;
     }
 }
