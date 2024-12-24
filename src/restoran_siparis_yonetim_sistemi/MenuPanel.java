@@ -43,6 +43,7 @@ public class MenuPanel extends JPanel {
 
         // Orta panel (Metin alanı)
         textArea = new JTextArea();
+        textArea.setEditable(false);
         add(new JScrollPane(textArea), BorderLayout.CENTER);
 
         // Butonların actionListener'ları
@@ -52,6 +53,24 @@ public class MenuPanel extends JPanel {
         btnAra.addActionListener(e -> urunAra());
         btnListele.addActionListener(e -> listeleMenu());
         btnFiyataGoreSirala.addActionListener(e -> fiyataGoreSirala());
+    }
+
+    /**
+     * Ürün adının menüde (ignore-case) mevcut olup olmadığını kontrol eder.
+     */
+    private boolean urunZatenVar(String urunAdi) {
+        // Tüm kategorilerdeki ürünleri tek bir Map'te toplayarak kontrol edebiliriz
+        Map<String, Double> tumUrunler = new HashMap<>();
+        tumUrunler.putAll(menu.getAnaYemekler());
+        tumUrunler.putAll(menu.getTatlilar());
+        tumUrunler.putAll(menu.getIçecekler());
+
+        for (String mevcutUrun : tumUrunler.keySet()) {
+            if (mevcutUrun.equalsIgnoreCase(urunAdi)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void urunEkle() {
@@ -68,7 +87,16 @@ public class MenuPanel extends JPanel {
         if (kategori == null) return;
 
         String urun = JOptionPane.showInputDialog("Ürün Adı:");
-        if (urun == null) return;
+        if (urun == null || urun.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ürün adı boş olamaz!");
+            return;
+        }
+
+        // Yeni ekleme: ürün zaten var mı kontrolü
+        if (urunZatenVar(urun)) {
+            JOptionPane.showMessageDialog(this, "Bu ürün menüde zaten mevcut!");
+            return;
+        }
 
         String fiyatStr = JOptionPane.showInputDialog("Fiyat (pozitif, double):");
         if (fiyatStr == null) return;
@@ -251,9 +279,42 @@ public class MenuPanel extends JPanel {
 
     private void urunAra() {
         String urunAdi = JOptionPane.showInputDialog("Aranacak Ürün Adı:");
-        if (urunAdi == null) return;
+        if (urunAdi == null || urunAdi.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Aranacak ürün adı boş olamaz!");
+            return;
+        }
 
-        double fiyat = menu.urunAra(urunAdi);
+        // Büyük/Küçük harf duyarsız arama için tüm ürünleri kontrol ediyoruz
+        double fiyat = -1;
+
+        // Ana Yemekler içinde arama
+        for (Map.Entry<String, Double> entry : menu.getAnaYemekler().entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(urunAdi.trim())) {
+                fiyat = entry.getValue();
+                break;
+            }
+        }
+
+        // Tatlılar içinde arama
+        if (fiyat == -1) {
+            for (Map.Entry<String, Double> entry : menu.getTatlilar().entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(urunAdi.trim())) {
+                    fiyat = entry.getValue();
+                    break;
+                }
+            }
+        }
+
+        // İçecekler içinde arama
+        if (fiyat == -1) {
+            for (Map.Entry<String, Double> entry : menu.getIçecekler().entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(urunAdi.trim())) {
+                    fiyat = entry.getValue();
+                    break;
+                }
+            }
+        }
+
         if (fiyat != -1) {
             JOptionPane.showMessageDialog(this, urunAdi + " menüde mevcut. Fiyat: " + fiyat + " TL");
         } else {

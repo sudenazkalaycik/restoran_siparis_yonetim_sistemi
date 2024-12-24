@@ -53,57 +53,75 @@ public class MasaPanel extends JPanel {
         btnListele.addActionListener(e -> masaListele());
     }
 
-    private void masaEkle() {
+    /**
+     * String ifadenin pozitif tamsayı içerip içermediğini kontrol eder.
+     */
+    private boolean isPositiveInteger(String input) {
         try {
-            int numara = Integer.parseInt(txtMasaNo.getText());
-            int kapasite = Integer.parseInt(txtKapasite.getText());
-
-            // Aynı numaraya sahip masa var mı kontrolü (opsiyonel)
-            if (masaBul(numara) != null) {
-                JOptionPane.showMessageDialog(this, "Bu numaraya sahip bir masa zaten var!");
-                return;
-            }
-
-            Masa yeniMasa = new Masa(numara, kapasite);
-            masalar.add(yeniMasa);
-            textArea.append("Masa eklendi: No=" + numara + ", Kapasite=" + kapasite + "\n");
-
-            // Dosyayı güncelle
-            saveMasalarToFile();
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Geçersiz giriş.");
+            int value = Integer.parseInt(input);
+            return value > 0;
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 
+    private void masaEkle() {
+        // "Masa No" ve "Kapasite" sadece pozitif int olmalı
+        if (!isPositiveInteger(txtMasaNo.getText()) || !isPositiveInteger(txtKapasite.getText())) {
+            JOptionPane.showMessageDialog(this, "Lütfen pozitif tamsayı değerleri giriniz.");
+            return;
+        }
+
+        int numara = Integer.parseInt(txtMasaNo.getText());
+        int kapasite = Integer.parseInt(txtKapasite.getText());
+
+        // Aynı numaraya sahip masa var mı kontrolü (opsiyonel)
+        if (masaBul(numara) != null) {
+            JOptionPane.showMessageDialog(this, "Bu numaraya sahip bir masa zaten var!");
+            return;
+        }
+
+        Masa yeniMasa = new Masa(numara, kapasite);
+        masalar.add(yeniMasa);
+        textArea.append("Masa eklendi: No=" + numara + ", Kapasite=" + kapasite + "\n");
+
+        // Dosyayı güncelle
+        saveMasalarToFile();
+    }
+
     private void masaAc() {
-        try {
-            int no = Integer.parseInt(txtMasaNo.getText());
-            Masa m = masaBul(no);
-            if (m != null) {
-                m.masaAc();
-                textArea.append(no + " numaralı masa açıldı.\n");
-                saveMasalarToFile(); // Durum değişti, dosyayı güncelle
-            } else {
-                JOptionPane.showMessageDialog(this, "Masa bulunamadı.");
-            }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Geçersiz Masa No.");
+        // "Masa No" sadece pozitif int olmalı
+        if (!isPositiveInteger(txtMasaNo.getText())) {
+            JOptionPane.showMessageDialog(this, "Lütfen pozitif tamsayı bir 'Masa No' giriniz.");
+            return;
+        }
+
+        int no = Integer.parseInt(txtMasaNo.getText());
+        Masa m = masaBul(no);
+        if (m != null) {
+            m.masaAc();
+            textArea.append(no + " numaralı masa açıldı.\n");
+            saveMasalarToFile();
+        } else {
+            JOptionPane.showMessageDialog(this, "Masa bulunamadı.");
         }
     }
 
     private void masaKapat() {
-        try {
-            int no = Integer.parseInt(txtMasaNo.getText());
-            Masa m = masaBul(no);
-            if (m != null) {
-                m.masaKapat();
-                textArea.append(no + " numaralı masa kapatıldı.\n");
-                saveMasalarToFile(); // Durum değişti, dosyayı güncelle
-            } else {
-                JOptionPane.showMessageDialog(this, "Masa bulunamadı.");
-            }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Geçersiz Masa No.");
+        // "Masa No" sadece pozitif int olmalı
+        if (!isPositiveInteger(txtMasaNo.getText())) {
+            JOptionPane.showMessageDialog(this, "Lütfen pozitif tamsayı bir 'Masa No' giriniz.");
+            return;
+        }
+
+        int no = Integer.parseInt(txtMasaNo.getText());
+        Masa m = masaBul(no);
+        if (m != null) {
+            m.masaKapat();
+            textArea.append(no + " numaralı masa kapatıldı.\n");
+            saveMasalarToFile();
+        } else {
+            JOptionPane.showMessageDialog(this, "Masa bulunamadı.");
         }
     }
 
@@ -130,9 +148,6 @@ public class MasaPanel extends JPanel {
         return null;
     }
 
-    /**
-     * Uygulama başlarken masalar.oot dosyasından kayıtlı masaları okur.
-     */
     private void loadMasalarFromFile() {
         File file = new File(DOSYA_ADI);
         if (!file.exists()) {
@@ -152,9 +167,6 @@ public class MasaPanel extends JPanel {
         }
     }
 
-    /**
-     * Masalar listesi değiştikçe .oot dosyasını günceller.
-     */
     private void saveMasalarToFile() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(DOSYA_ADI, false))) {
             for (Masa m : masalar) {
