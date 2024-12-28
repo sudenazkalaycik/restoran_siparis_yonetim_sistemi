@@ -55,9 +55,7 @@ public class MenuPanel extends JPanel {
         btnFiyataGoreSirala.addActionListener(e -> fiyataGoreSirala());
     }
 
-    /**
-     * Ürün adının menüde (ignore-case) mevcut olup olmadığını kontrol eder.
-     */
+    
     private boolean urunZatenVar(String urunAdi) {
         // Tüm kategorilerdeki ürünleri tek bir Map'te toplayarak kontrol edebiliriz
         Map<String, Double> tumUrunler = new HashMap<>();
